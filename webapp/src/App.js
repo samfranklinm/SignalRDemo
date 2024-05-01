@@ -19,7 +19,7 @@ function App() {
       setSentenceFromWebApi(prev => prev + word + " ");
     };
 
-    const onReceiveWordFromPlugin = (word) => {
+    const onReceiveWordFromCustomGPT = (word) => {
       setSentenceFromPlugin(prev => prev + word + " ");
     };
 
@@ -30,7 +30,7 @@ function App() {
     connect.start().then(() => {
       setConnection(connect);
       connect.on("ReceiveFromWebApi", onReceiveWordFromWebApi); // listener for the event that the hub will send from the webapi
-      connect.on("ReceiveFromPlugin", onReceiveWordFromPlugin); // listener for the event that the hub will send from the plugin
+      connect.on("ReceiveFromCustomGPT", onReceiveWordFromCustomGPT); // listener for the event that the hub will send from the plugin
       connect.on("StreamCancelled", onStreamCancelled); 
     }).catch(err => console.error('Connection failed: ', err));
 
@@ -38,7 +38,7 @@ function App() {
     return () => {
       if (connect) { 
         connect.off("ReceiveFromWebApi", onReceiveWordFromWebApi); 
-        connect.off("ReceiveFromPlugin", onReceiveWordFromPlugin);
+        connect.off("ReceiveFromCustomGPT", onReceiveWordFromCustomGPT);
         connect.off("StreamCancelled", onStreamCancelled);
         connect.stop(); 
       }
@@ -59,7 +59,7 @@ function App() {
   const getSentenceFromPlugin = () => {
     if (connection) {
       setStreaming(true);
-      connection.invoke("StreamToClientFromPlugin")
+      connection.invoke("StreamToClientFromCustomGPT")
         .catch(err => {
           console.error('Error invoking the method on the hub: ', err);
           setStreaming(false);
