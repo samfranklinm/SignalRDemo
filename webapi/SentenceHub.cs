@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using System.Threading;
 
 namespace webapi.SentenceHub
 {
@@ -13,23 +12,24 @@ namespace webapi.SentenceHub
             _externalClient = externalClient;
         }
 
-        public async Task StreamToClientFromPlugin()
+        public async Task StreamToClientFromPlugin(CancellationToken cancellationToken)
         {
-            _streamCancellationTokenSource = new CancellationTokenSource();
+            //_streamCancellationTokenSource = new CancellationTokenSource();
             try
             {
-                await foreach (var sentence in _externalClient.RequestSentenceFromExternalStreamer(_streamCancellationTokenSource.Token))
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    if (_streamCancellationTokenSource.IsCancellationRequested)
+                    await foreach (var sentence in _externalClient.RequestSentenceFromExternalStreamer(cancellationToken))
                     {
-                        _streamCancellationTokenSource.Token.ThrowIfCancellationRequested();
+                        await Clients.All.SendAsync("ReceiveFromPlugin", sentence);
                     }
-                    Clients.All.SendAsync("ReceiveFromPlugin", sentence);
                 }
+                if (cancellationToken.IsCancellationRequested)
+                    await Clients.All.SendAsync("StreamCancelled", "Streaming has been cancelled.");
             }
             catch (OperationCanceledException)
             {
-                Clients.Caller.SendAsync("StreamCancelled", "Streaming has been cancelled.");
+                await Clients.Caller.SendAsync("StreamCancelled", "Streaming has been cancelled.");
             }
             finally
             {
@@ -37,13 +37,13 @@ namespace webapi.SentenceHub
             }
         }
 
-        public async Task CancelStreaming()
-        {
-            if (_streamCancellationTokenSource != null && !_streamCancellationTokenSource.IsCancellationRequested)
-            {
-                _streamCancellationTokenSource.Cancel();
-            }
-        }
+        //public async Task CancelStreaming()
+        //{
+        //    if (_streamCancellationTokenSource != null && !_streamCancellationTokenSource.IsCancellationRequested)
+        //    {
+        //        _streamCancellationTokenSource.Cancel();
+        //    }
+        //}
 
         public async Task StreamToClientFromWebApi()
         {
