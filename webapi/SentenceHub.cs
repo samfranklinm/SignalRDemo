@@ -13,19 +13,22 @@ namespace webapi.SentenceHub
             _externalClient = externalClient;
         }
 
-        public async Task StreamToClientFromPlugin()
+        public async Task StreamToClientFromCustomGPT()
         {
             _streamCancellationTokenSource = new CancellationTokenSource();
             try
             {
-                await foreach (var sentence in _externalClient.RequestSentenceFromExternalStreamer(_streamCancellationTokenSource.Token))
+                await Task.Run(async () =>
                 {
-                    if (_streamCancellationTokenSource.IsCancellationRequested)
+                    await foreach (var sentence in _externalClient.RequestSentenceFromCustomGPT(_streamCancellationTokenSource.Token))
                     {
-                        _streamCancellationTokenSource.Token.ThrowIfCancellationRequested();
+                        if (_streamCancellationTokenSource.IsCancellationRequested)
+                        {
+                            _streamCancellationTokenSource.Token.ThrowIfCancellationRequested();
+                        }
+                        await Clients.All.SendAsync("ReceiveFromCustomGPT", sentence);
                     }
-                    Clients.All.SendAsync("ReceiveFromPlugin", sentence);
-                }
+                });
             }
             catch (OperationCanceledException)
             {
