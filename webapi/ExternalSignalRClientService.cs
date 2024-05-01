@@ -71,7 +71,7 @@ public class ExternalSignalRClientService
             catch (Exception ex)
             {
                 _logger.LogError($"Error starting stream: {ex.Message}");
-                yield break; 
+                yield break;
             }
 
             await foreach (var sentence in stream.WithCancellation(ct).ConfigureAwait(false))
@@ -79,7 +79,7 @@ public class ExternalSignalRClientService
                 if (ct.IsCancellationRequested)
                 {
                     _logger.LogInformation("Cancellation requested, stopping stream...");
-                    break; 
+                    break;
                 }
                 await Task.Delay(1000, ct);
                 yield return sentence;
