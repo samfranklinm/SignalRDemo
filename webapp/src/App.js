@@ -56,7 +56,7 @@ function App() {
     }
   };
 
-  const getSentenceFromPlugin = () => {
+  const getSentenceFromGPT = () => {
     if (connection) {
       setStreaming(true);
       connection.invoke("StreamToClientFromCustomGPT")
@@ -101,7 +101,7 @@ function App() {
           <p style={{ color: '#4CAF50', fontSize: '18px' }}>{sentenceFromWebApi}</p>
 
           <div style={{display: "flex", alignContent: "center", justifyContent: "center"}}>
-            <Button variant="primary" style={{ margin: '10px' }} onClick={() => getSentenceFromPlugin()} >
+            <Button variant="primary" style={{ margin: '10px' }} onClick={() => getSentenceFromGPT()} >
               Stream From Plugin
             </Button>
             <Button variant="danger" style={{ margin: '5px' }} onClick={() => cancelStreaming()}>
