@@ -20,7 +20,7 @@ namespace webapi.SentenceHub
             {
                 await foreach (var sentence in _externalClient.RequestSentenceFromCustomGPT(token))
                 {
-                    await Clients.All.SendAsync("ReceiveFromPlugin", sentence, token);
+                    await Clients.All.SendAsync("ReceiveFromCustomGPT", sentence, token);
                 }
                 if (token.IsCancellationRequested)
                     await Clients.All.SendAsync("StreamCancelled", "Streaming has been cancelled.");
