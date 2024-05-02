@@ -37,7 +37,7 @@ public class ExternalSignalRClientService
         }
     }
 
-    public IAsyncEnumerable<string> RequestSentenceFromExternalStreamer(CancellationToken ct)
+    public IAsyncEnumerable<string> RequestSentenceFromCustomGPT(CancellationToken ct)
     {
         return StreamSentencesAsync(ct);
     }

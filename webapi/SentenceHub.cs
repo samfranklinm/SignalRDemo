@@ -10,19 +10,17 @@ namespace webapi.SentenceHub
         public SentenceHub(ExternalSignalRClientService externalClient)
         {
             _externalClient = externalClient;
+            _streamCancellationTokenSource = new CancellationTokenSource();
         }
 
-        public async Task StreamToClientFromPlugin(CancellationToken cancellationToken)
+        public async Task StreamToClientFromCustomGPT()
         {
-            //_streamCancellationTokenSource = new CancellationTokenSource();
+            var token = _streamCancellationTokenSource.Token;
             try
             {
-                while (!cancellationToken.IsCancellationRequested)
+                await foreach (var sentence in _externalClient.RequestSentenceFromCustomGPT(token))
                 {
-                    await foreach (var sentence in _externalClient.RequestSentenceFromExternalStreamer(cancellationToken))
-                    {
-                        await Clients.All.SendAsync("ReceiveFromPlugin", sentence);
-                    }
+                    await Clients.All.SendAsync("ReceiveFromPlugin", sentence, token);
                 }
                 if (cancellationToken.IsCancellationRequested)
                     await Clients.All.SendAsync("StreamCancelled", "Streaming has been cancelled.");
@@ -37,13 +35,10 @@ namespace webapi.SentenceHub
             }
         }
 
-        //public async Task CancelStreaming()
-        //{
-        //    if (_streamCancellationTokenSource != null && !_streamCancellationTokenSource.IsCancellationRequested)
-        //    {
-        //        _streamCancellationTokenSource.Cancel();
-        //    }
-        //}
+        public void CancelStreaming()
+        {
+            _streamCancellationTokenSource.Cancel();
+        }
 
         public async Task StreamToClientFromWebApi()
         {
