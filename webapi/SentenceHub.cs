@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using System.Threading;
 
 namespace webapi.SentenceHub
 {
@@ -11,28 +10,22 @@ namespace webapi.SentenceHub
         public SentenceHub(ExternalSignalRClientService externalClient)
         {
             _externalClient = externalClient;
+            _streamCancellationTokenSource = new CancellationTokenSource();
         }
 
         public async Task StreamToClientFromCustomGPT()
         {
-            _streamCancellationTokenSource = new CancellationTokenSource();
+            var token = _streamCancellationTokenSource.Token;
             try
             {
-                await Task.Run(async () =>
+                await foreach (var sentence in _externalClient.RequestSentenceFromCustomGPT(token))
                 {
-                    await foreach (var sentence in _externalClient.RequestSentenceFromCustomGPT(_streamCancellationTokenSource.Token))
-                    {
-                        if (_streamCancellationTokenSource.IsCancellationRequested)
-                        {
-                            _streamCancellationTokenSource.Token.ThrowIfCancellationRequested();
-                        }
-                        await Clients.All.SendAsync("ReceiveFromCustomGPT", sentence);
-                    }
-                });
+                    await Clients.All.SendAsync("ReceiveFromPlugin", sentence, token);
+                }
             }
             catch (OperationCanceledException)
             {
-                Clients.Caller.SendAsync("StreamCancelled", "Streaming has been cancelled.");
+                await Clients.Caller.SendAsync("StreamCancelled", "Streaming has been cancelled.");
             }
             finally
             {
@@ -40,12 +33,9 @@ namespace webapi.SentenceHub
             }
         }
 
-        public async Task CancelStreaming()
+        public void CancelStreaming()
         {
-            if (_streamCancellationTokenSource != null && !_streamCancellationTokenSource.IsCancellationRequested)
-            {
-                _streamCancellationTokenSource.Cancel();
-            }
+            _streamCancellationTokenSource.Cancel();
         }
 
         public async Task StreamToClientFromWebApi()

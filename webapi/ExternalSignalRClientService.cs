@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading.Tasks;
-using System.Threading;
+using System.Runtime.CompilerServices;
 
 public class ExternalSignalRClientService
 {
@@ -24,7 +21,7 @@ public class ExternalSignalRClientService
             _tcs.TrySetResult(sentence);
         });
 
-        InitializeConnectionAsync();
+        InitializeConnectionAsync().Wait();
     }
 
     private async Task InitializeConnectionAsync()
@@ -45,7 +42,7 @@ public class ExternalSignalRClientService
         return StreamSentencesAsync(ct);
     }
 
-    private async IAsyncEnumerable<string> StreamSentencesAsync(CancellationToken ct)
+    private async IAsyncEnumerable<string> StreamSentencesAsync([EnumeratorCancellation] CancellationToken ct)
     {
         if (_connection.State != HubConnectionState.Connected)
         {
