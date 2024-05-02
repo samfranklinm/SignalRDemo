@@ -22,7 +22,7 @@ namespace webapi.SentenceHub
                 {
                     await Clients.All.SendAsync("ReceiveFromPlugin", sentence, token);
                 }
-                if (cancellationToken.IsCancellationRequested)
+                if (token.IsCancellationRequested)
                     await Clients.All.SendAsync("StreamCancelled", "Streaming has been cancelled.");
             }
             catch (OperationCanceledException)
