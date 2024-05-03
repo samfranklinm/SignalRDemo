@@ -58,12 +58,12 @@ public class ExternalSignalRClientService
             }
         }
 
-        if (_connection.State == HubConnectionState.Connected)
+        if (_connection.State == HubConnectionState.Connected && !ct.IsCancellationRequested)
         {
             IAsyncEnumerable<string> stream;
             try
             {
-                stream = _connection.StreamAsync<string>("GetSentence", ct);
+                stream = _connection.StreamAsync<string>("GetSentences", false, cancellationToken: ct);
             }
             catch (Exception ex)
             {
@@ -76,12 +76,38 @@ public class ExternalSignalRClientService
                 if (ct.IsCancellationRequested)
                 {
                     _logger.LogInformation("Cancellation requested, stopping stream...");
-                    break;
+                    yield break;
                 }
                 await Task.Delay(1000, ct);
                 yield return sentence;
             }
             _logger.LogInformation("Streaming completed");
+        }
+        else if (ct.IsCancellationRequested)
+        {
+            Console.WriteLine("Cancellation requested, requesting ExternalStreamer to stop streaming...");
+
+            IAsyncEnumerable<string> stream;
+            try
+            {
+                stream = _connection.StreamAsync<string>("GetSentences", true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error starting stream: {ex.Message}");
+                yield break;
+            }
+
+            await foreach (var sentence in stream)
+            {
+                if (ct.IsCancellationRequested)
+                {
+                    _logger.LogInformation("Cancellation requested, stopping stream...");
+                    yield return sentence;
+                }
+                await Task.Delay(1000, ct);
+                yield return sentence;
+            }
         }
         else
         {

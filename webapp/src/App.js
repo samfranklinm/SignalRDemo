@@ -56,10 +56,10 @@ function App() {
     }
   };
 
-  const getSentenceFromGPT = () => {
+  const getSentenceFromGPT = (requestCancellation) => {
     if (connection) {
       setStreaming(true);
-      connection.invoke("StreamToClientFromCustomGPT")
+      connection.invoke("ManageStreaming", requestCancellation)
         .catch(err => {
           console.error('Error invoking the method on the hub: ', err);
           setStreaming(false);
@@ -101,10 +101,10 @@ function App() {
           <p style={{ color: '#4CAF50', fontSize: '18px' }}>{sentenceFromWebApi}</p>
 
           <div style={{display: "flex", alignContent: "center", justifyContent: "center"}}>
-            <Button variant="primary" style={{ margin: '10px' }} onClick={() => getSentenceFromGPT()} >
+            <Button variant="primary" style={{ margin: '10px' }} onClick={() => getSentenceFromGPT(false)} >
               Stream From Plugin
             </Button>
-            <Button variant="danger" style={{ margin: '5px' }} onClick={() => cancelStreaming()}>
+            <Button variant="danger" style={{ margin: '5px' }} onClick={() => getSentenceFromGPT(true)}>
               Stop Stream
             </Button>
           </div>
